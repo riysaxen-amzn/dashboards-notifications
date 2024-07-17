@@ -6,8 +6,13 @@
 import { EuiPage, EuiPageBody, EuiPageSideBar, EuiSideNav } from '@elastic/eui';
 import React, { Component, createContext } from 'react';
 import { Redirect, Route, RouteComponentProps, Switch } from 'react-router-dom';
+<<<<<<< HEAD
 import { CoreStart } from '../../../../../src/core/public';
 import { CoreServicesConsumer } from '../../components/coreServices';
+=======
+import { CoreStart, SavedObject } from '../../../../../src/core/public';
+import { CoreServicesConsumer, CoreServicesContext } from '../../components/coreServices';
+>>>>>>> aba3a4c (version decoupling support (#221))
 import { ModalProvider, ModalRoot } from '../../components/Modal';
 import { BrowserServices } from '../../models/interfaces';
 import { ServicesConsumer, ServicesContext } from '../../services/services';
@@ -20,6 +25,23 @@ import { CreateSender } from '../Emails/CreateSender';
 import { CreateSESSender } from '../Emails/CreateSESSender';
 import { EmailGroups } from '../Emails/EmailGroups';
 import { EmailSenders } from '../Emails/EmailSenders';
+<<<<<<< HEAD
+=======
+import { DataSourceMenuContext, DataSourceMenuProperties } from "../../services/DataSourceMenuContext";
+import queryString from "query-string";
+import {
+  DataSourceManagementPluginSetup,
+  DataSourceSelectableConfig,
+  DataSourceViewConfig,
+} from "../../../../../src/plugins/data_source_management/public";
+import { DataSourceOption } from "../../../../../src/plugins/data_source_management/public/components/data_source_menu/types";
+import _ from "lodash";
+import { NotificationService } from '../../services';
+import { HttpSetup } from '../../../../../src/core/public';
+import * as pluginManifest from "../../../opensearch_dashboards.json";
+import { DataSourceAttributes } from "../../../../../src/plugins/data_source/common/data_sources";
+import semver from "semver";
+>>>>>>> aba3a4c (version decoupling support (#221))
 
 enum Navigation {
   Notifications = 'Notifications',
@@ -81,6 +103,40 @@ export default class Main extends Component<MainProps, MainState> {
         tooltipSupport: serverFeatures.tooltipSupport,
       });
     }
+<<<<<<< HEAD
+=======
+    if (this.state.dataSourceLoading) {
+      this.setState({
+        dataSourceLoading: false,
+      });
+    }
+  };
+
+  dataSourceFilterFn = (dataSource: SavedObject<DataSourceAttributes>) => {
+    const dataSourceVersion = dataSource?.attributes?.dataSourceVersion || "";
+    const installedPlugins = dataSource?.attributes?.installedPlugins || [];
+    return (
+      semver.satisfies(dataSourceVersion, pluginManifest.supportedOSDataSourceVersions) &&
+      pluginManifest.requiredOSDataSourcePlugins.every((plugin) => installedPlugins.includes(plugin))
+    );
+  };
+
+  getServices(http: HttpSetup) {
+    const {
+      location: { pathname },
+    } = this.props;
+    let notificationService;
+    if (this.props.multiDataSourceEnabled) {
+      notificationService = new NotificationService(http, this.state.dataSourceId, this.props.multiDataSourceEnabled);
+    }
+    else {
+      notificationService = new NotificationService(http);
+    }
+    const services = {
+      notificationService,
+    };
+    return services;
+>>>>>>> aba3a4c (version decoupling support (#221))
   }
 
   render() {
@@ -124,7 +180,96 @@ export default class Main extends Component<MainProps, MainState> {
                 services && (
                   <MainContext.Provider value={this.state}>
                     <ModalProvider>
+<<<<<<< HEAD
                       <ModalRoot services={services} />
+=======
+                      <DataSourceMenuContext.Provider
+                        value={{
+                          dataSourceId: this.state.dataSourceId,
+                          dataSourceLabel: this.state.dataSourceLabel,
+                          multiDataSourceEnabled: this.props.multiDataSourceEnabled,
+                        }}
+                      >
+                        {this.props.multiDataSourceEnabled && DataSourceMenuView && DataSourceMenuSelectable && (
+                          <Switch>
+                            <Route
+                              path={[
+                                `${ROUTES.EDIT_CHANNEL}/:id`,
+                                `${ROUTES.CHANNEL_DETAILS}/:id`,
+                                `${ROUTES.EDIT_SENDER}/:id`,
+                                `${ROUTES.EDIT_RECIPIENT_GROUP}/:id`,
+                                `${ROUTES.EDIT_SES_SENDER}/:id`
+                              ]}
+                              render={() => (
+                                <DataSourceMenuView
+                                  setMenuMountPoint={this.props.setActionMenu}
+                                  componentType={"DataSourceView"}
+                                  componentConfig={{
+                                    activeOption: [{ label: this.state.dataSourceLabel, id: this.state.dataSourceId }],
+                                    dataSourceFilter: this.dataSourceFilterFn,
+                                  }}
+                                />
+                              )}
+                            />
+                            <Route
+                              path={[
+                                "/",
+                                ROUTES.CHANNELS,
+                                ROUTES.CREATE_CHANNEL,
+                                ROUTES.CREATE_SENDER,
+                                ROUTES.CREATE_SES_SENDER,
+                                ROUTES.CREATE_RECIPIENT_GROUP,
+                                ROUTES.EMAIL_GROUPS,
+                                ROUTES.EMAIL_SENDERS,
+                                ROUTES.NOTIFICATIONS,
+                              ]}
+                              render={() => (
+                                <DataSourceMenuSelectable
+                                  setMenuMountPoint={this.props.setActionMenu}
+                                  componentType={"DataSourceSelectable"}
+                                  componentConfig={{
+                                    savedObjects: core?.savedObjects.client,
+                                    notifications: core?.notifications,
+                                    fullWidth: false,
+                                    activeOption,
+                                    onSelectedDataSources: this.onSelectedDataSources,
+                                    dataSourceFilter: this.dataSourceFilterFn,
+                                  }}
+                                />
+                              )}
+                            />
+                            <Route
+                              path={[ROUTES.CREATE_SES_SENDER, ROUTES.CREATE_CHANNEL, ROUTES.CREATE_RECIPIENT_GROUP, ROUTES.CREATE_SENDER]}
+                              render={() =>
+                                this.state.dataSourceReadOnly ? (
+                                  <DataSourceMenuView
+                                    setMenuMountPoint={this.props.setActionMenu}
+                                    componentType={"DataSourceView"}
+                                    componentConfig={{
+                                      activeOption: [{ label: this.state.dataSourceLabel, id: this.state.dataSourceId }],
+                                      fullWidth: false,
+                                      dataSourceFilter: this.dataSourceFilterFn,
+                                    }}
+                                  />
+                                ) : (
+                                  <DataSourceMenuSelectable
+                                    setMenuMountPoint={this.props.setActionMenu}
+                                    componentType={"DataSourceSelectable"}
+                                    componentConfig={{
+                                      savedObjects: core?.savedObjects.client,
+                                      notifications: core?.notifications,
+                                      fullWidth: false,
+                                      activeOption,
+                                      onSelectedDataSources: this.onSelectedDataSources,
+                                      dataSourceFilter: this.dataSourceFilterFn,
+                                    }}
+                                  />
+                                )
+                              }
+                            />
+                          </Switch>
+                        )}
+>>>>>>> aba3a4c (version decoupling support (#221))
                       <EuiPage>
                         {pathname !== ROUTES.CREATE_CHANNEL &&
                           !pathname.startsWith(ROUTES.EDIT_CHANNEL) &&

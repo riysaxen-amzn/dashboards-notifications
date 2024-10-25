@@ -139,7 +139,7 @@ export function configRoutes(router: IRouter, dataSourceEnabled: boolean) {
         return response.ok({ body: resp });
       } catch (error) {
         return response.custom({
-          statusCode: error.statusCode || 500,
+          statusCode: error.statusCode || 400,
           body: error.message,
         });
       }
@@ -244,7 +244,11 @@ export function configRoutes(router: IRouter, dataSourceEnabled: boolean) {
   router.get(
     {
       path: NODE_API.GET_AVAILABLE_FEATURES,
-      validate: false,
+      validate: dataSourceEnabled ? {
+        query: schema.object({
+          dataSourceId: schema.string(),
+        }),
+      } : false,
     },
     async (context, request, response) => {
       const client = MDSEnabledClientService.getClient(request, context, dataSourceEnabled);
@@ -257,7 +261,7 @@ export function configRoutes(router: IRouter, dataSourceEnabled: boolean) {
           keyof typeof CHANNEL_TYPE
         >;
         const channelTypes: Partial<typeof CHANNEL_TYPE> = {};
-        
+
         for (let channel of config_type_list) {
           if (CHANNEL_TYPE[channel]) {
             channelTypes[channel] = CHANNEL_TYPE[channel]
@@ -273,7 +277,7 @@ export function configRoutes(router: IRouter, dataSourceEnabled: boolean) {
         return response.ok({ body: availableFeature });
       } catch (error) {
         return response.custom({
-          statusCode: error.statusCode || 500,
+          statusCode: error.statusCode || 400,
           body: error.message,
         });
       }
